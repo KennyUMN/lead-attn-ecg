@@ -54,12 +54,17 @@ Previous efforts to apply Graph Attention Networks (GAT) to 12-lead ECG signals 
 
 ---
 
-## 🏗️ Interactive Architecture Diagram (Generated via Archify)
+## 🏗️ System Architecture (Generated via Archify)
 
-The system architecture and multi-stage electrophysiological tensor pipeline has been validated and compiled into an interactive SVG/HTML diagram using Archify:
+Visualisasi alur komprehensif arsitektur **LeadAttnResNet**: ekstraksi fitur temporal paralel berbasis 1D-ResNet stem, pemodelan proyeksi spasial antar-sadapan via Multi-Head Self-Attention, mitigasi ketimpangan kelas 18:1 dengan Asymmetric Loss (ASL), dan in-silico stress-testing.
 
-- **Interactive Architecture Viewer:** [`docs/architecture/lead-attn-ecg-architecture.html`](docs/architecture/lead-attn-ecg-architecture.html)
-- **Specification Source:** [`docs/architecture/candidate.json`](docs/architecture/candidate.json)
+![LeadAttnResNet Architecture](docs/lead_attn_ecg_architecture.png)
+
+> **Format & Interaktivitas:**
+> - 🔗 **Interactive Viewer (Zoom/Pan/Dark/Light/Trace Animation):** [`docs/lead_attn_ecg_architecture.html`](docs/lead_attn_ecg_architecture.html)
+> - 📐 **Standalone Vector SVG:** [`docs/lead_attn_ecg_architecture.svg`](docs/lead_attn_ecg_architecture.svg)
+> - 📄 **Archify Typed Specification:** [`docs/architecture/candidate.json`](docs/architecture/candidate.json)
+
 
 ```
 Input: 12-Lead ECG [Batch, 12, 1000] (10s @ 100Hz)
