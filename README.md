@@ -1,9 +1,11 @@
 # LeadAttnResNet: High-Performance 12-Lead ECG Classification with Native Inter-Lead Attention & Asymmetric Loss
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
+[![Release](https://img.shields.io/badge/Release-v1.0.0-blue.svg)](https://github.com/KennyUMN/lead-attn-ecg/releases/tag/v1.0.0)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PTB-XL](https://img.shields.io/badge/Dataset-PTB--XL-green.svg)](https://physionet.org/content/ptb-xl/1.0.3/)
-[![Weights](https://img.shields.io/badge/Weights-663_KB-orange.svg)](best_lead_attn_model.pt)
+[![Weights](https://img.shields.io/badge/Model_Weights-663_KB-orange.svg)](https://github.com/KennyUMN/lead-attn-ecg/releases/download/v1.0.0/best_lead_attn_model.pt)
+
 
 An ultra-compact (**163,622 parameters, ~663 KB**), clinically grounded deep learning architecture for multi-label 12-lead electrocardiogram (ECG) arrhythmia classification.
 
