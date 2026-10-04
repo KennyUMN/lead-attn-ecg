@@ -1,0 +1,449 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LeadAttnResNet — 12-Lead ECG Spatial Attention & Robustness",
+    "locale": "en",
+    "output": ".archify/architecture-lead-attn-ecg-20261004/lead-attn-ecg-architecture.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "ecg-input",
+      "type": "external",
+      "label": "12-Lead ECG Input",
+      "sublabel": "10s @ 100Hz [B, 12, 1000]",
+      "tag": "PTB-XL (N=20,949)",
+      "pos": [40, 100],
+      "size": [150, 64]
+    },
+    {
+      "id": "limb-leads",
+      "type": "external",
+      "label": "Limb Leads (I-aVF)",
+      "sublabel": "Frontal plane [B, 6, 1000]",
+      "tag": "I, II, III, aVR, aVL, aVF",
+      "pos": [290, 40],
+      "size": [145, 60]
+    },
+    {
+      "id": "precordial-leads",
+      "type": "external",
+      "label": "Precordial Leads",
+      "sublabel": "Horizontal plane [B, 6, 1000]",
+      "tag": "V1, V2, V3, V4, V5, V6",
+      "pos": [290, 160],
+      "size": [145, 60]
+    },
+    {
+      "id": "batch-folding",
+      "type": "backend",
+      "label": "Batch Lead Folding",
+      "sublabel": "view(B*12, 1, 1000)",
+      "tag": "zero GNN overhead",
+      "pos": [540, 100],
+      "size": [145, 64]
+    },
+    {
+      "id": "resnet-stem",
+      "type": "backend",
+      "label": "1D-ResNet Stem",
+      "sublabel": "Conv1d + 2x ResBlock1D",
+      "tag": "shared weights",
+      "pos": [790, 100],
+      "size": [155, 64]
+    },
+    {
+      "id": "lead-tokens",
+      "type": "backend",
+      "label": "Spatial Lead Unfold",
+      "sublabel": "view(B, 12, 128)",
+      "tag": "lead tokens [12, 128]",
+      "pos": [1050, 100],
+      "size": [160, 64]
+    },
+    {
+      "id": "inter-lead-mha",
+      "type": "backend",
+      "label": "Inter-Lead Attention",
+      "sublabel": "4 heads, d_model=128",
+      "tag": "spatial self-attention",
+      "pos": [1050, 290],
+      "size": [160, 64]
+    },
+    {
+      "id": "spatial-xai",
+      "type": "frontend",
+      "label": "Spatial Attention Map",
+      "sublabel": "12x12 inter-lead matrix",
+      "tag": "Native XAI",
+      "pos": [1050, 460],
+      "size": [160, 64]
+    },
+    {
+      "id": "residual-norm",
+      "type": "backend",
+      "label": "Residual & LayerNorm",
+      "sublabel": "tokens = norm(x + attn)",
+      "tag": "[B, 12, 128]",
+      "pos": [790, 290],
+      "size": [155, 64]
+    },
+    {
+      "id": "global-pool",
+      "type": "backend",
+      "label": "Lead Mean Pooling",
+      "sublabel": "tokens.mean(dim=1)",
+      "tag": "patient vector [128]",
+      "pos": [540, 290],
+      "size": [145, 64]
+    },
+    {
+      "id": "classifier",
+      "type": "backend",
+      "label": "Classification Head",
+      "sublabel": "Linear(128->64) + Dropout",
+      "tag": "6-class logits",
+      "pos": [290, 290],
+      "size": [145, 64]
+    },
+    {
+      "id": "diagnostics",
+      "type": "frontend",
+      "label": "Multi-Label Output",
+      "sublabel": "NORM, AFIB, CLBBB, 1AVB...",
+      "tag": "Macro-AUROC 0.9238",
+      "pos": [40, 290],
+      "size": [150, 64]
+    },
+    {
+      "id": "asl-loss",
+      "type": "security",
+      "label": "Asymmetric Loss (ASL)",
+      "sublabel": "γ_neg=4, γ_pos=1, clip=0.05",
+      "tag": "34:1 imbalance",
+      "pos": [290, 460],
+      "size": [145, 64]
+    },
+    {
+      "id": "model-ckpt",
+      "type": "database",
+      "label": "best_model.pt",
+      "sublabel": "PyTorch weights (678 KB)",
+      "tag": "Fold 1-8 Best Val",
+      "pos": [40, 460],
+      "size": [150, 64]
+    },
+    {
+      "id": "stress-suite",
+      "type": "security",
+      "label": "Stress-Test Suite",
+      "sublabel": "In-silico Artifact Injection",
+      "tag": "clinical eval",
+      "pos": [40, 630],
+      "size": [150, 64]
+    },
+    {
+      "id": "gaussian-noise",
+      "type": "security",
+      "label": "Gaussian EMG Noise",
+      "sublabel": "High-freq artifact (σ=0.10)",
+      "tag": "ΔAUROC: -0.0160",
+      "pos": [290, 630],
+      "size": [145, 64]
+    },
+    {
+      "id": "baseline-wander",
+      "type": "security",
+      "label": "Baseline Wander",
+      "sublabel": "0.25 Hz respiration sine",
+      "tag": "ΔAUROC: -0.0121",
+      "pos": [540, 630],
+      "size": [145, 64]
+    },
+    {
+      "id": "precordial-drop",
+      "type": "security",
+      "label": "Precordial Dropout",
+      "sublabel": "Electrode off: V1, V5, V6 = 0",
+      "tag": "ΔAUROC: -0.0138",
+      "pos": [790, 630],
+      "size": [155, 64]
+    },
+    {
+      "id": "robustness-report",
+      "type": "database",
+      "label": "Robustness Report",
+      "sublabel": "Fold-10 Test Benchmark",
+      "tag": "Macro-AUROC >0.90",
+      "pos": [1050, 630],
+      "size": [160, 64]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Stage 1 — Input Ingestion & Shared 1D-ResNet Feature Extraction",
+      "wraps": [
+        "ecg-input",
+        "limb-leads",
+        "precordial-leads",
+        "batch-folding",
+        "resnet-stem",
+        "lead-tokens"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Stage 2 — Inter-Lead Self-Attention & Native Explainability (XAI)",
+      "wraps": [
+        "inter-lead-mha",
+        "spatial-xai",
+        "residual-norm"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Stage 3 — Multi-Label Classifier & Imbalance Mitigation (ASL)",
+      "wraps": [
+        "diagnostics",
+        "classifier",
+        "global-pool",
+        "asl-loss",
+        "model-ckpt"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Stage 4 — Electrophysiological Stress-Testing & Robustness Suite",
+      "wraps": [
+        "stress-suite",
+        "gaussian-noise",
+        "baseline-wander",
+        "precordial-drop",
+        "robustness-report"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "ecg-to-limb",
+      "from": "ecg-input",
+      "to": "limb-leads",
+      "label": "frontal leads",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "ecg-to-precordial",
+      "from": "ecg-input",
+      "to": "precordial-leads",
+      "label": "precordial leads",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "limb-to-fold",
+      "from": "limb-leads",
+      "to": "batch-folding",
+      "label": "I..aVF",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "precordial-to-fold",
+      "from": "precordial-leads",
+      "to": "batch-folding",
+      "label": "V1..V6",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "fold-to-stem",
+      "from": "batch-folding",
+      "to": "resnet-stem",
+      "label": "B*12 parallel",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "stem-to-tokens",
+      "from": "resnet-stem",
+      "to": "lead-tokens",
+      "label": "spatial tokens",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "tokens-to-mha",
+      "from": "lead-tokens",
+      "to": "inter-lead-mha",
+      "label": "Q, K, V tokens",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mha-to-xai",
+      "from": "inter-lead-mha",
+      "to": "spatial-xai",
+      "label": "attention weights",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mha-to-norm",
+      "from": "inter-lead-mha",
+      "to": "residual-norm",
+      "label": "residual sum",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "norm-to-pool",
+      "from": "residual-norm",
+      "to": "global-pool",
+      "label": "mean pooling",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "pool-to-classifier",
+      "from": "global-pool",
+      "to": "classifier",
+      "label": "dense [128]",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "classifier-to-diag",
+      "from": "classifier",
+      "to": "diagnostics",
+      "label": "sigmoid >= 0.5",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "classifier-to-asl",
+      "from": "classifier",
+      "to": "asl-loss",
+      "label": "focal discount",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "diagnostics-to-ckpt",
+      "from": "diagnostics",
+      "to": "model-ckpt",
+      "label": "save state_dict",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ckpt-to-stress",
+      "from": "model-ckpt",
+      "to": "stress-suite",
+      "label": "load weights",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "stress-to-noise",
+      "from": "stress-suite",
+      "to": "gaussian-noise",
+      "label": "inject noise",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "noise-to-wander",
+      "from": "gaussian-noise",
+      "to": "baseline-wander",
+      "label": "add wander",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "wander-to-drop",
+      "from": "baseline-wander",
+      "to": "precordial-drop",
+      "label": "lead dropout",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "drop-to-report",
+      "from": "precordial-drop",
+      "to": "robustness-report",
+      "label": "benchmark eval",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "xai-to-report",
+      "from": "spatial-xai",
+      "to": "robustness-report",
+      "label": "coupling stability",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Data & 1D-ResNet Ingestion",
+      "items": [
+        "12-Lead ECG (10s @ 100Hz = [12, 1000]) dari PTB-XL (20.949 rekaman klinis)",
+        "Limb Leads (I-aVF) + Precordial Leads (V1-V6) difold ke batch [B*12, 1, 1000]",
+        "1D-ResNet stem mengekstrak fitur temporal paralel tanpa dependensi runtime PyG"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Inter-Lead Attention & Native XAI",
+      "items": [
+        "MultiheadAttention 4 head (d_model=128) memodelkan korelasi elektrofisiologis spasial",
+        "Matriks atensi [12, 12] native XAI mengungkap kopling timbal balik antar-lead",
+        "Residual connection + LayerNorm menjaga stabilitas representasi sebelum pooling"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Imbalance Handling (ASL)",
+      "items": [
+        "Asymmetric Loss (γ_neg=4, γ_pos=1, clip=0.05) mendiskon negatif mudah",
+        "Mengatasi ketimpangan ekstrem 34:1 untuk 6 kelas diagnostik (NORM, AFIB, CLBBB, 1AVB, SBRAD, STACH)",
+        "Mencapai test Macro-AUROC >0.92 dengan checkpoint FP32 berukuran 678 KB"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Stress-Testing & Robustness",
+      "items": [
+        "Severe Gaussian EMG Noise (σ=0.10) hanya menurunkan AUROC sebesar 0.0160",
+        "Baseline Wander sinusoidal (0.25 Hz respirasi) hanya menurunkan AUROC 0.0121",
+        "Precordial Disconnection (V1, V5, V6 = 0) membuktikan model toleran terhadap elektroda lepas"
+      ]
+    }
+  ]
+}

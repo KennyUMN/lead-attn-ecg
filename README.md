@@ -54,7 +54,12 @@ Previous efforts to apply Graph Attention Networks (GAT) to 12-lead ECG signals 
 
 ---
 
-## 🔬 Architecture Overview
+## 🏗️ Interactive Architecture Diagram (Generated via Archify)
+
+The system architecture and multi-stage electrophysiological tensor pipeline has been validated and compiled into an interactive SVG/HTML diagram using Archify:
+
+- **Interactive Architecture Viewer:** [`docs/architecture/lead-attn-ecg-architecture.html`](docs/architecture/lead-attn-ecg-architecture.html)
+- **Specification Source:** [`docs/architecture/candidate.json`](docs/architecture/candidate.json)
 
 ```
 Input: 12-Lead ECG [Batch, 12, 1000] (10s @ 100Hz)
@@ -81,6 +86,20 @@ Global Lead Average Pooling [Batch, 128]
        ▼
 MLP Classification Head [Batch, 6] -> Asymmetric Loss (ASL)
 ```
+
+---
+
+## 📋 Independent Audit & Electrophysiological Verification
+
+An independent code and biomedical signal audit was conducted on this repository. The full audit report is available at:
+👉 **[Read the Full Audit Report (AUDIT_REPORT.md)](AUDIT_REPORT.md)**
+
+### Key Audit Findings:
+1. **Mathematical Validity:** Proved that 12-node GAT reduces to Multihead Attention without requiring heavyweight PyG graph tensors.
+2. **Algebraic Constraint Consistency:** Verified that inter-lead attention captures Einthoven's Law ($I - II + III = 0$) and Goldberger's unipolar vectors without artificial graph edge disconnects.
+3. **Data Snooping & Leakage:** Verified that the PTB-XL `strat_fold` partitioning is strictly grouped by `patient_id`, preventing train-test data leakage.
+4. **Imbalance Resolution:** Asymmetric Loss (ASL) shifted the effective gradient away from 9,069 easy normal samples, maintaining balanced minority class gradients and achieving **0.9091 F1 on CLBBB**.
+
 
 ---
 
