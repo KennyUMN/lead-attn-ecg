@@ -43,3 +43,33 @@ class AsymmetricLoss(nn.Module):
         loss_pos = y * torch.log(p.clamp(min=self.eps)) * ((1.0 - p) ** self.gamma_pos)
         loss_neg = (1.0 - y) * torch.log(p_neg.clamp(min=self.eps)) * (p ** self.gamma_neg)
         return -(loss_pos + loss_neg).sum(dim=-1).mean()
+
+
+class NoiseConsistencyLoss(nn.Module):
+    """
+    Dual-Branch Consistency Loss as formulated in the original NC-GAT proposal:
+    L_total = L_classification(clean, y) + lambda_c * L_consistency(clean, noisy)
+
+    Enables true noise-consistency regularization without VRAM OOM on compact architectures.
+    """
+    def __init__(self, base_loss: nn.Module = None, lambda_consistency: float = 1.0, mode: str = "mse"):
+        super().__init__()
+        self.base_loss = base_loss if base_loss is not None else AsymmetricLoss()
+        self.lambda_c = lambda_consistency
+        self.mode = mode
+
+    def forward(self, logits_clean: torch.Tensor, logits_noisy: torch.Tensor, y: torch.Tensor):
+        loss_cls = self.base_loss(logits_clean, y)
+        p_clean = torch.sigmoid(logits_clean)
+        p_noisy = torch.sigmoid(logits_noisy)
+
+        if self.mode == "mse":
+            loss_cons = F.mse_loss(p_noisy, p_clean)
+        elif self.mode == "kl":
+            loss_cons = F.kl_div(torch.log(p_noisy.clamp(min=1e-8)), p_clean, reduction="batchmean")
+        else:
+            loss_cons = F.mse_loss(p_noisy, p_clean)
+
+        total_loss = loss_cls + self.lambda_c * loss_cons
+        return total_loss, loss_cls, loss_cons
+
